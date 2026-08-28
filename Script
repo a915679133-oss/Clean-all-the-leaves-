@@ -1,0 +1,219 @@
+-- Expanded Script for "Clean all the leaves!"
+-- Compatible with Delta Executor
+
+local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
+
+local Window = Rayfield:CreateWindow({
+   Name = "🍂 Clean All Leaves Hub v2",
+   LoadingTitle = "Загрузка обновленного скрипта...",
+   LoadingSubtitle = "by Delta User",
+   ConfigurationSaving = { Enabled = false }
+})
+
+-- Переменные состояния
+local autoCollect = false
+local autoSell = false
+local autoUpgradeStats = false
+local autoBuyTools = false
+local selectedTool = "All"
+
+-- 🌾 ВКЛАДКА 1: ФАРМ И АВТОМАТИЗАЦИЯ
+local FarmTab = Window:CreateTab("🌾 Авто-Фарм", 4483362458)
+
+-- Выбор инструмента
+FarmTab:CreateDropdown({
+   Name = "Выберите инструмент сбора",
+   Options = {"All (Все)", "Rake (Грабли)", "Blower (Воздуходувка)", "Vacuum (Пылесос)"},
+   CurrentOption = "All (Все)",
+   Callback = function(Option)
+      selectedTool = Option[1]
+   end,
+})
+
+-- Авто-сбор
+FarmTab:CreateToggle({
+   Name = "Авто-сбор листьев",
+   CurrentValue = false,
+   Callback = function(Value)
+      autoCollect = Value
+      task.spawn(function()
+         while autoCollect do
+            pcall(function()
+               -- Экипировка выбранного инструмента
+               local player = game.Players.LocalPlayer
+               for _, tool in ipairs(player.Backpack:GetChildren()) do
+                  if tool:IsA("Tool") then
+                     if selectedTool == "All (Все)" or tool.Name:find(selectedTool) then
+                        player.Character.Humanoid:EquipTool(tool)
+                        break
+                     end
+                  end
+               end
+
+               -- Сбор листьев
+               for _, leaf in ipairs(game:GetService("Workspace"):GetChildren()) do
+                  if not autoCollect then break end
+                  if leaf:IsA("BasePart") and (leaf.Name:lower():find("leaf") or leaf.Name:lower():find("leaves")) then
+                     player.Character.HumanoidRootPart.CFrame = leaf.CFrame
+                     task.wait(0.1)
+                  end
+               end
+            end)
+            task.wait(0.5)
+         end
+      end)
+   end,
+})
+
+-- Авто-продажа
+FarmTab:CreateToggle({
+   Name = "Авто-продажа (Dumpster)",
+   CurrentValue = false,
+   Callback = function(Value)
+      autoSell = Value
+      task.spawn(function()
+         while autoSell do
+            pcall(function()
+               local dumpster = game:GetService("Workspace"):FindFirstChild("Dumpster") 
+                  or game:GetService("Workspace"):FindFirstChild("SellZone")
+                  or game:GetService("Workspace"):FindFirstChild("Sell")
+
+               if dumpster then
+                  local targetPos = dumpster:IsA("Model") and dumpster:GetPrimaryPartCFrame() or dumpster.CFrame
+                  if targetPos then
+                     game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = targetPos
+                  end
+               end
+            end)
+            task.wait(2.5)
+         end
+      end)
+   end,
+})
+
+-- Авто-улучшение характеристик текущего инструмента
+FarmTab:CreateToggle({
+   Name = "Авто-улучшение статов инструмента",
+   CurrentValue = false,
+   Callback = function(Value)
+      autoUpgradeStats = Value
+      task.spawn(function()
+         while autoUpgradeStats do
+            pcall(function()
+               -- Отправка события прокачки на сервер
+               local remotes = game:GetService("ReplicatedStorage"):FindFirstChild("Remotes") 
+                  or game:GetService("ReplicatedStorage"):FindFirstChild("Events")
+               if remotes then
+                  if remotes:FindFirstChild("UpgradeStat") then
+                     remotes.UpgradeStat:FireServer("ToolSpeed")
+                     remotes.UpgradeStat:FireServer("ToolCapacity")
+                  elseif remotes:FindFirstChild("Upgrade") then
+                     remotes.Upgrade:FireServer()
+                  end
+               end
+            end)
+            task.wait(1)
+         end
+      end)
+   end,
+})
+
+-- Авто-покупка новых инструментов и авто-экипировка
+FarmTab:CreateToggle({
+   Name = "Авто-покупка лучших инструментов",
+   CurrentValue = false,
+   Callback = function(Value)
+      autoBuyTools = Value
+      task.spawn(function()
+         while autoBuyTools do
+            pcall(function()
+               local remotes = game:GetService("ReplicatedStorage"):FindFirstChild("Remotes")
+               if remotes and remotes:FindFirstChild("BuyNextTool") then
+                  remotes.BuyNextTool:FireServer()
+               end
+               
+               -- Переключение на самый новый инструмент в инвентаре
+               local backpack = game.Players.LocalPlayer.Backpack:GetChildren()
+               if #backpack > 0 then
+                  game.Players.LocalPlayer.Character.Humanoid:EquipTool(backpack[#backpack])
+               end
+            end)
+            task.wait(3)
+         end
+      end)
+   end,
+})
+
+
+-- 🛒 ВКЛАДКА 2: МАГАЗИН И ПОКУПКИ
+local ShopTab = Window:CreateTab("🛒 Магазин", 4483362458)
+
+ShopTab:CreateSection("Улучшение Мешка (Capacity)")
+
+ShopTab:CreateButton({
+   Name = "Улучшить мешок — 💰 100 Cash",
+   Callback = function()
+      pcall(function()
+         local remotes = game:GetService("ReplicatedStorage"):FindFirstChild("Remotes")
+         if remotes and remotes:FindFirstChild("BuyBag") then
+            remotes.BuyBag:FireServer(1)
+         end
+      end)
+   end,
+})
+
+ShopTab:CreateButton({
+   Name = "Улучшить мешок (Многое) — 💰 1,000 Cash",
+   Callback = function()
+      pcall(function()
+         local remotes = game:GetService("ReplicatedStorage"):FindFirstChild("Remotes")
+         if remotes and remotes:FindFirstChild("BuyBag") then
+            remotes.BuyBag:FireServer(2)
+         end
+      end)
+   end,
+})
+
+ShopTab:CreateSection("Инструменты (Tools)")
+
+ShopTab:CreateButton({
+   Name = "Продвинутые грабли — 💰 250 Cash",
+   Callback = function()
+      pcall(function()
+         local remotes = game:GetService("ReplicatedStorage"):FindFirstChild("Remotes")
+         if remotes and remotes:FindFirstChild("BuyTool") then
+            remotes.BuyTool:FireServer("AdvancedRake")
+         end
+      end)
+   end,
+})
+
+ShopTab:CreateButton({
+   Name = "Воздуходувка — 💰 1,500 Cash",
+   Callback = function()
+      pcall(function()
+         local remotes = game:GetService("ReplicatedStorage"):FindFirstChild("Remotes")
+         if remotes and remotes:FindFirstChild("BuyTool") then
+            remotes.BuyTool:FireServer("LeafBlower")
+         end
+      end)
+   end,
+})
+
+ShopTab:CreateButton({
+   Name = "Листовой пылесос — 💰 10,000 Cash",
+   Callback = function()
+      pcall(function()
+         local remotes = game:GetService("ReplicatedStorage"):FindFirstChild("Remotes")
+         if remotes and remotes:FindFirstChild("BuyTool") then
+            remotes.BuyTool:FireServer("LeafVacuum")
+         end
+      end)
+   end,
+})
+
+Rayfield:Notify({
+   Title = "Гуи полностью обновлено!",
+   Content = "Добавлены авто-улучшения, авто-покупка и вкладка Магазина.",
+   Duration = 4,
+})

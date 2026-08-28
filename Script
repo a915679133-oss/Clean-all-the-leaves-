@@ -1,219 +1,150 @@
--- Expanded Script for "Clean all the leaves!"
--- Compatible with Delta Executor
+-- Lite Utility Script (WalkSpeed, Fly, Noclip) for Delta Executor
 
-local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
+local ScreenGui = Instance.new("ScreenGui")
+local MainFrame = Instance.new("Frame")
+local Title = Instance.new("TextLabel")
+local SpeedBtn = Instance.new("TextButton")
+local FlyBtn = Instance.new("TextButton")
+local NoclipBtn = Instance.new("TextButton")
+local CloseBtn = Instance.new("TextButton")
 
-local Window = Rayfield:CreateWindow({
-   Name = "🍂 Clean All Leaves Hub v2",
-   LoadingTitle = "Загрузка обновленного скрипта...",
-   LoadingSubtitle = "by Delta User",
-   ConfigurationSaving = { Enabled = false }
-})
+ScreenGui.Name = "LiteUtilsGui"
+ScreenGui.Parent = game:GetService("CoreGui")
 
--- Переменные состояния
-local autoCollect = false
-local autoSell = false
-local autoUpgradeStats = false
-local autoBuyTools = false
-local selectedTool = "All"
+MainFrame.Name = "MainFrame"
+MainFrame.Parent = ScreenGui
+MainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+MainFrame.BorderSizePixel = 0
+MainFrame.Position = UDim2.new(0.05, 0, 0.3, 0)
+MainFrame.Size = UDim2.new(0, 180, 0, 220)
+MainFrame.Active = true
+MainFrame.Draggable = true
 
--- 🌾 ВКЛАДКА 1: ФАРМ И АВТОМАТИЗАЦИЯ
-local FarmTab = Window:CreateTab("🌾 Авто-Фарм", 4483362458)
+Title.Parent = MainFrame
+Title.Size = UDim2.new(1, 0, 0, 30)
+Title.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
+Title.Text = "⚡ Movement Utilities"
+Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+Title.TextSize = 13
 
--- Выбор инструмента
-FarmTab:CreateDropdown({
-   Name = "Выберите инструмент сбора",
-   Options = {"All (Все)", "Rake (Грабли)", "Blower (Воздуходувка)", "Vacuum (Пылесос)"},
-   CurrentOption = "All (Все)",
-   Callback = function(Option)
-      selectedTool = Option[1]
-   end,
-})
+-- 1. SPEED HACK (Переключатель 16 / 100)
+local speedOn = false
+SpeedBtn.Parent = MainFrame
+SpeedBtn.Position = UDim2.new(0.1, 0, 0.18, 0)
+SpeedBtn.Size = UDim2.new(0.8, 0, 0, 35)
+SpeedBtn.BackgroundColor3 = Color3.fromRGB(180, 50, 50)
+SpeedBtn.Text = "Speed: ВЫКЛ"
+SpeedBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 
--- Авто-сбор
-FarmTab:CreateToggle({
-   Name = "Авто-сбор листьев",
-   CurrentValue = false,
-   Callback = function(Value)
-      autoCollect = Value
-      task.spawn(function()
-         while autoCollect do
+SpeedBtn.MouseButton1Click:Connect(function()
+    speedOn = not speedOn
+    if speedOn then
+        SpeedBtn.BackgroundColor3 = Color3.fromRGB(50, 180, 50)
+        SpeedBtn.Text = "Speed: 100"
+    else
+        SpeedBtn.BackgroundColor3 = Color3.fromRGB(180, 50, 50)
+        SpeedBtn.Text = "Speed: ВЫКЛ"
+        pcall(function() game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = 16 end)
+    end
+end)
+
+task.spawn(function()
+    while true do
+        if speedOn then
             pcall(function()
-               -- Экипировка выбранного инструмента
-               local player = game.Players.LocalPlayer
-               for _, tool in ipairs(player.Backpack:GetChildren()) do
-                  if tool:IsA("Tool") then
-                     if selectedTool == "All (Все)" or tool.Name:find(selectedTool) then
-                        player.Character.Humanoid:EquipTool(tool)
-                        break
-                     end
-                  end
-               end
-
-               -- Сбор листьев
-               for _, leaf in ipairs(game:GetService("Workspace"):GetChildren()) do
-                  if not autoCollect then break end
-                  if leaf:IsA("BasePart") and (leaf.Name:lower():find("leaf") or leaf.Name:lower():find("leaves")) then
-                     player.Character.HumanoidRootPart.CFrame = leaf.CFrame
-                     task.wait(0.1)
-                  end
-               end
+                game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = 100
             end)
-            task.wait(0.5)
-         end
-      end)
-   end,
-})
+        end
+        task.wait(0.1)
+    end
+end)
 
--- Авто-продажа
-FarmTab:CreateToggle({
-   Name = "Авто-продажа (Dumpster)",
-   CurrentValue = false,
-   Callback = function(Value)
-      autoSell = Value
-      task.spawn(function()
-         while autoSell do
-            pcall(function()
-               local dumpster = game:GetService("Workspace"):FindFirstChild("Dumpster") 
-                  or game:GetService("Workspace"):FindFirstChild("SellZone")
-                  or game:GetService("Workspace"):FindFirstChild("Sell")
+-- 2. NOCLIP (Хождение сквозь стены)
+local noclipOn = false
+NoclipBtn.Parent = MainFrame
+NoclipBtn.Position = UDim2.new(0.1, 0, 0.38, 0)
+NoclipBtn.Size = UDim2.new(0.8, 0, 0, 35)
+NoclipBtn.BackgroundColor3 = Color3.fromRGB(180, 50, 50)
+NoclipBtn.Text = "Noclip: ВЫКЛ"
+NoclipBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 
-               if dumpster then
-                  local targetPos = dumpster:IsA("Model") and dumpster:GetPrimaryPartCFrame() or dumpster.CFrame
-                  if targetPos then
-                     game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = targetPos
-                  end
-               end
-            end)
-            task.wait(2.5)
-         end
-      end)
-   end,
-})
+NoclipBtn.MouseButton1Click:Connect(function()
+    noclipOn = not noclipOn
+    if noclipOn then
+        NoclipBtn.BackgroundColor3 = Color3.fromRGB(50, 180, 50)
+        NoclipBtn.Text = "Noclip: ВКЛ"
+    else
+        NoclipBtn.BackgroundColor3 = Color3.fromRGB(180, 50, 50)
+        NoclipBtn.Text = "Noclip: ВЫКЛ"
+    end
+end)
 
--- Авто-улучшение характеристик текущего инструмента
-FarmTab:CreateToggle({
-   Name = "Авто-улучшение статов инструмента",
-   CurrentValue = false,
-   Callback = function(Value)
-      autoUpgradeStats = Value
-      task.spawn(function()
-         while autoUpgradeStats do
-            pcall(function()
-               -- Отправка события прокачки на сервер
-               local remotes = game:GetService("ReplicatedStorage"):FindFirstChild("Remotes") 
-                  or game:GetService("ReplicatedStorage"):FindFirstChild("Events")
-               if remotes then
-                  if remotes:FindFirstChild("UpgradeStat") then
-                     remotes.UpgradeStat:FireServer("ToolSpeed")
-                     remotes.UpgradeStat:FireServer("ToolCapacity")
-                  elseif remotes:FindFirstChild("Upgrade") then
-                     remotes.Upgrade:FireServer()
-                  end
-               end
-            end)
-            task.wait(1)
-         end
-      end)
-   end,
-})
+game:GetService("RunService").Stepped:Connect(function()
+    if noclipOn then
+        pcall(function()
+            for _, part in ipairs(game.Players.LocalPlayer.Character:GetDescendants()) do
+                if part:IsA("BasePart") then
+                    part.CanCollide = false
+                end
+            end
+        end)
+    end
+end)
 
--- Авто-покупка новых инструментов и авто-экипировка
-FarmTab:CreateToggle({
-   Name = "Авто-покупка лучших инструментов",
-   CurrentValue = false,
-   Callback = function(Value)
-      autoBuyTools = Value
-      task.spawn(function()
-         while autoBuyTools do
-            pcall(function()
-               local remotes = game:GetService("ReplicatedStorage"):FindFirstChild("Remotes")
-               if remotes and remotes:FindFirstChild("BuyNextTool") then
-                  remotes.BuyNextTool:FireServer()
-               end
-               
-               -- Переключение на самый новый инструмент в инвентаре
-               local backpack = game.Players.LocalPlayer.Backpack:GetChildren()
-               if #backpack > 0 then
-                  game.Players.LocalPlayer.Character.Humanoid:EquipTool(backpack[#backpack])
-               end
-            end)
-            task.wait(3)
-         end
-      end)
-   end,
-})
+-- 3. FLY (Полёт на BodyVelocity)
+local flying = false
+local flybv, bg
 
+FlyBtn.Parent = MainFrame
+FlyBtn.Position = UDim2.new(0.1, 0, 0.58, 0)
+FlyBtn.Size = UDim2.new(0.8, 0, 0, 35)
+FlyBtn.BackgroundColor3 = Color3.fromRGB(180, 50, 50)
+FlyBtn.Text = "Fly: ВЫКЛ"
+FlyBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 
--- 🛒 ВКЛАДКА 2: МАГАЗИН И ПОКУПКИ
-local ShopTab = Window:CreateTab("🛒 Магазин", 4483362458)
+FlyBtn.MouseButton1Click:Connect(function()
+    flying = not flying
+    local char = game.Players.LocalPlayer.Character
+    if flying and char and char:FindFirstChild("HumanoidRootPart") then
+        FlyBtn.BackgroundColor3 = Color3.fromRGB(50, 180, 50)
+        FlyBtn.Text = "Fly: ВКЛ"
+        
+        flybv = Instance.new("BodyVelocity")
+        flybv.Parent = char.HumanoidRootPart
+        flybv.MaxForce = Vector3.new(1e5, 1e5, 1e5)
+        
+        bg = Instance.new("BodyGyro")
+        bg.Parent = char.HumanoidRootPart
+        bg.MaxTorque = Vector3.new(1e5, 1e5, 1e5)
+        bg.P = 9e4
+        
+        task.spawn(function()
+            while flying do
+                local cam = workspace.CurrentCamera
+                flybv.Velocity = cam.CFrame.LookVector * 50
+                bg.CFrame = cam.CFrame
+                task.wait()
+            end
+            if flybv then flybv:Destroy() end
+            if bg then bg:Destroy() end
+        end)
+    else
+        FlyBtn.BackgroundColor3 = Color3.fromRGB(180, 50, 50)
+        FlyBtn.Text = "Fly: ВЫКЛ"
+        if flybv then flybv:Destroy() end
+        if bg then bg:Destroy() end
+    end
+end)
 
-ShopTab:CreateSection("Улучшение Мешка (Capacity)")
+-- 4. CLOSE
+CloseBtn.Parent = MainFrame
+CloseBtn.Position = UDim2.new(0.1, 0, 0.8, 0)
+CloseBtn.Size = UDim2.new(0.8, 0, 0, 30)
+CloseBtn.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
+CloseBtn.Text = "Закрыть"
+CloseBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 
-ShopTab:CreateButton({
-   Name = "Улучшить мешок — 💰 100 Cash",
-   Callback = function()
-      pcall(function()
-         local remotes = game:GetService("ReplicatedStorage"):FindFirstChild("Remotes")
-         if remotes and remotes:FindFirstChild("BuyBag") then
-            remotes.BuyBag:FireServer(1)
-         end
-      end)
-   end,
-})
+CloseBtn.MouseButton1Click:Connect(function()
+    ScreenGui:Destroy()
+end)
 
-ShopTab:CreateButton({
-   Name = "Улучшить мешок (Многое) — 💰 1,000 Cash",
-   Callback = function()
-      pcall(function()
-         local remotes = game:GetService("ReplicatedStorage"):FindFirstChild("Remotes")
-         if remotes and remotes:FindFirstChild("BuyBag") then
-            remotes.BuyBag:FireServer(2)
-         end
-      end)
-   end,
-})
-
-ShopTab:CreateSection("Инструменты (Tools)")
-
-ShopTab:CreateButton({
-   Name = "Продвинутые грабли — 💰 250 Cash",
-   Callback = function()
-      pcall(function()
-         local remotes = game:GetService("ReplicatedStorage"):FindFirstChild("Remotes")
-         if remotes and remotes:FindFirstChild("BuyTool") then
-            remotes.BuyTool:FireServer("AdvancedRake")
-         end
-      end)
-   end,
-})
-
-ShopTab:CreateButton({
-   Name = "Воздуходувка — 💰 1,500 Cash",
-   Callback = function()
-      pcall(function()
-         local remotes = game:GetService("ReplicatedStorage"):FindFirstChild("Remotes")
-         if remotes and remotes:FindFirstChild("BuyTool") then
-            remotes.BuyTool:FireServer("LeafBlower")
-         end
-      end)
-   end,
-})
-
-ShopTab:CreateButton({
-   Name = "Листовой пылесос — 💰 10,000 Cash",
-   Callback = function()
-      pcall(function()
-         local remotes = game:GetService("ReplicatedStorage"):FindFirstChild("Remotes")
-         if remotes and remotes:FindFirstChild("BuyTool") then
-            remotes.BuyTool:FireServer("LeafVacuum")
-         end
-      end)
-   end,
-})
-
-Rayfield:Notify({
-   Title = "Гуи полностью обновлено!",
-   Content = "Добавлены авто-улучшения, авто-покупка и вкладка Магазина.",
-   Duration = 4,
-})
